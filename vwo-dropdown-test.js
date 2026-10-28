@@ -149,7 +149,7 @@
       '#ngs-ac .ngs-load{position:absolute;left:0;top:0;height:2px;width:30%;background:' + B + ';opacity:0;}',
       '#ngs-ac.ngs-loading .ngs-load{opacity:1;animation:ngs-bar 1s ease-in-out infinite;}',
       '@keyframes ngs-bar{0%{left:-30%;}100%{left:100%;}}',
-      '#ngs-ac .ngs-body{display:grid;grid-template-columns:1fr;overflow-y:auto;min-height:0;}',
+      '#ngs-ac .ngs-body{display:grid;grid-template-columns:minmax(0,1fr);overflow-y:auto;overflow-x:hidden;min-height:0;flex:1 1 auto;}',
       '#ngs-ac.ngs-two .ngs-body{grid-template-columns:minmax(0,310px) minmax(0,1fr);}',
       '#ngs-ac .ngs-col{padding:8px 0;min-width:0;}',
       '#ngs-ac.ngs-two .ngs-col + .ngs-col{border-left:1px solid #eceef0;}',
