@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Nedgame zoekmodel live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='13' cy='13' r='8' fill='none' stroke='%2300669b' stroke-width='3'/%3E%3Cpath d='M19 19l8 8' stroke='%2300669b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- Toegang -->
+  <section id="gate" class="gate" hidden>
+    <form id="gate-form" class="gate-card" autocomplete="off">
+      <h1>Nedgame zoekmodel</h1>
+      <p>Vul het dashboard-token in. Je maakt er een aan in Supabase met
+        <code>select private.dashboard_new_token('naam');</code></p>
+      <label for="gate-token">Dashboard-token</label>
+      <input id="gate-token" type="password" spellcheck="false" required>
+      <p id="gate-error" class="gate-error" role="alert" hidden>Dit token werkt niet. Controleer of je het volledig hebt gekopieerd.</p>
+      <button type="submit">Openen</button>
+    </form>
+  </section>
+
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <h1>Nedgame zoekmodel</h1>
+        <span class="brand-sub">Zelflerend zoeken · live</span>
+      </div>
+      <div class="live" aria-live="polite">
+        <span class="live-dot" id="live-dot" aria-hidden="true"></span>
+        <span id="live-text">Verbinden…</span>
+      </div>
+      <div class="top-actions">
+        <button type="button" class="ghost" id="theme-toggle" aria-label="Wissel licht of donker thema">Thema</button>
+        <button type="button" class="ghost" id="logout">Uitloggen</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- 1. Kerncijfers -->
+      <section class="kpis" aria-labelledby="kpi-title">
+        <h2 id="kpi-title" class="sr-only">Kerncijfers vandaag</h2>
+        <div class="hero">
+          <div class="hero-label">Zoekopdrachten met een klik, vandaag</div>
+          <div class="hero-value"><span id="hero-ctr">–</span></div>
+          <div class="hero-delta" id="hero-delta"></div>
+          <svg class="hero-spark" id="hero-spark" viewBox="0 0 240 48" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <!-- 2. Leerlus -->
+      <section class="card loop-card" aria-labelledby="loop-title">
+        <div class="card-head">
+          <div>
+            <h2 id="loop-title">Hoe het model leert</h2>
+            <p class="card-sub">Elk bolletje is een echt signaal van een bezoeker. Elke 5 minuten verwerkt de leerstap ze tot nieuwe kennis, die direct in de zoeksuggesties terugkomt.</p>
+          </div>
+          <div class="legend" id="loop-legend"></div>
+        </div>
+        <div class="loop-grid">
+          <div class="loop-stage">
+            <svg id="loop-svg" role="img" aria-label="Schema van de leerlus: bezoekers, signalen, leerstap, model, zoeksuggesties"></svg>
+            <div class="growth">
+              <div class="growth-head"><h3 class="chart-title">Wat de leerstappen de laatste uren hebben opgeleverd (opgeteld)</h3><div class="legend" id="growth-legend"></div></div>
+              <div class="chart" id="growth-chart"></div>
+            </div>
+          </div>
+          <div class="feed">
+            <div class="feed-head">
+              <h3>Live gebeurtenissen</h3>
+              <span class="muted" id="feed-rate"></span>
+            </div>
+            <ol class="feed-list" id="feed-list" aria-live="off"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Leermodules -->
+      <section class="card" aria-labelledby="mod-title">
+        <div class="card-head">
+          <div>
+            <h2 id="mod-title">Leermodules</h2>
+            <p class="card-sub">Wat elk onderdeel van het algoritme doet en hoe ver het is met leren.</p>
+          </div>
+        </div>
+        <div class="modules" id="modules"></div>
+      </section>
+
+      <!-- 4. Wat het geleerd heeft -->
+      <div class="grid-2">
+        <section class="card" aria-labelledby="pairs-title">
+          <div class="card-head">
+            <div>
+              <h2 id="pairs-title">Geleerde koppelingen</h2>
+              <p class="card-sub">Zoekterm → product dat vaker gekozen wordt dan je op basis van de positie verwacht. Score 0 = geen effect.</p>
+            </div>
+          </div>
+          <div id="pairs"></div>
+        </section>
+        <section class="card" aria-labelledby="rw-title">
+          <div class="card-head">
+            <div>
+              <h2 id="rw-title">Herschrijvingen en synoniemen</h2>
+              <p class="card-sub">Een zoekopdracht zonder succes, direct gevolgd door een vergelijkbare die wél werkt. Vaak genoeg gezien, dan wordt het een synoniem.</p>
+            </div>
+          </div>
+          <div id="rewrites"></div>
+        </section>
+      </div>
+
+      <!-- 5. Positie-bias + leerstappen -->
+      <div class="grid-2">
+        <section class="card" aria-labelledby="pb-title">
+          <div class="card-head">
+            <div>
+              <h2 id="pb-title">Positie-bias</h2>
+              <p class="card-sub">Hoe vaak er op elke plek geklikt wordt, ten opzichte van plek 1. Het model corrigeert hiervoor, zodat een product op plek 8 niet onterecht als slecht wordt gezien.</p>
+            </div>
+            <button type="button" class="ghost small" data-table="pb">Tabel</button>
+          </div>
+          <div class="legend" id="pb-legend"></div>
+          <div class="chart" id="pb-chart"></div>
+          <div class="calib" id="pb-calib"></div>
+        </section>
+        <section class="card" aria-labelledby="runs-title">
+          <div class="card-head">
+            <div>
+              <h2 id="runs-title">Leerstappen</h2>
+              <p class="card-sub">Signalen verwerkt per leerstap (elke 5 minuten), en hoeveel koppelingen daarbij zijn bijgewerkt.</p>
+            </div>
+            <button type="button" class="ghost small" data-table="runs">Tabel</button>
+          </div>
+          <div class="legend" id="runs-legend"></div>
+          <div class="chart" id="runs-chart"></div>
+        </section>
+      </div>
+
+      <!-- 6. Activiteit -->
+      <section class="card" aria-labelledby="act-title">
+        <div class="card-head">
+          <div>
+            <h2 id="act-title">Activiteit afgelopen 48 uur</h2>
+            <p class="card-sub">Zoekopdrachten per uur en het aandeel met een klik.</p>
+          </div>
+          <button type="button" class="ghost small" data-table="hourly">Tabel</button>
+        </div>
+        <div class="grid-2 inner">
+          <div><h3 class="chart-title">Zoekopdrachten per uur</h3><div class="chart" id="hourly-chart"></div></div>
+          <div><h3 class="chart-title">Aandeel met klik</h3><div class="chart" id="ctr-chart"></div></div>
+        </div>
+      </section>
+
+      <!-- 7. Experiment + exploratie -->
+      <div class="grid-2">
+        <section class="card" aria-labelledby="arm-title">
+          <div class="card-head">
+            <div>
+              <h2 id="arm-title">Experiment: variant tegenover controle</h2>
+              <p class="card-sub">Laatste 14 dagen. De balk toont het aandeel zoekopdrachten met een klik, met 95%-betrouwbaarheidsinterval.</p>
+            </div>
+          </div>
+          <div id="arms"></div>
+        </section>
+        <section class="card" aria-labelledby="ex-title">
+          <div class="card-head">
+            <div>
+              <h2 id="ex-title">Exploratie</h2>
+              <p class="card-sub">Af en toe toont het model op de laatste productplek een relevant product dat nog weinig kansen kreeg. Zo roest het niet vast op wat nu al populair is.</p>
+            </div>
+          </div>
+          <div id="explore"></div>
+        </section>
+      </div>
+
+      <!-- 8. Kansen -->
+      <div class="grid-2">
+        <section class="card" aria-labelledby="tq-title">
+          <div class="card-head">
+            <div>
+              <h2 id="tq-title">Meest gezocht, 7 dagen</h2>
+              <p class="card-sub">Met het aandeel zoekopdrachten dat tot een klik leidde.</p>
+            </div>
+          </div>
+          <div id="top-queries"></div>
+        </section>
+        <section class="card" aria-labelledby="zq-title">
+          <div class="card-head">
+            <div>
+              <h2 id="zq-title">Zoekopdrachten zonder resultaat</h2>
+              <p class="card-sub">Kansen voor het assortiment of voor een synoniem.</p>
+            </div>
+          </div>
+          <div id="zero-queries"></div>
+        </section>
+      </div>
+
+      <footer class="foot">
+        <span id="foot-meta"></span>
+        <span>Zoekteksten met e-mailadressen, lange cijferreeksen of links worden gemaskeerd. Er worden geen bezoekers-id's getoond.</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+  <dialog id="table-dialog" class="table-dialog">
+    <form method="dialog"><button class="ghost small dialog-close" aria-label="Sluiten">Sluiten</button></form>
+    <h2 id="table-title"></h2>
+    <div id="table-body"></div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
