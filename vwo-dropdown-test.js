@@ -132,7 +132,7 @@
     var css = [
       '#QuickSearchResult{display:none !important;}',
       /* dim-laag achter de dropdown */
-      '#ngs-dim{position:fixed;inset:0;background:rgba(17,17,17,.38);z-index:10;opacity:0;pointer-events:none;transition:opacity .16s ease;}',
+      '#ngs-dim{position:fixed;inset:0;background:rgba(17,17,17,.42);z-index:10;opacity:0;pointer-events:none;transition:opacity .16s ease;}',
       '#ngs-dim.ngs-on{opacity:1;pointer-events:auto;}',
       /* wisknop in het zoekveld */
       '#ngs-clear{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;display:none;align-items:center;justify-content:center;border:0;background:transparent;color:#666;cursor:pointer;border-radius:50%;padding:0;z-index:2;}',
@@ -150,7 +150,7 @@
       '#ngs-ac.ngs-loading .ngs-load{opacity:1;animation:ngs-bar 1s ease-in-out infinite;}',
       '@keyframes ngs-bar{0%{left:-30%;}100%{left:100%;}}',
       '#ngs-ac .ngs-body{display:grid;grid-template-columns:1fr;overflow-y:auto;min-height:0;}',
-      '#ngs-ac.ngs-two .ngs-body{grid-template-columns:minmax(0,290px) minmax(0,1fr);}',
+      '#ngs-ac.ngs-two .ngs-body{grid-template-columns:minmax(0,310px) minmax(0,1fr);}',
       '#ngs-ac .ngs-col{padding:8px 0;min-width:0;}',
       '#ngs-ac.ngs-two .ngs-col + .ngs-col{border-left:1px solid #eceef0;}',
       '#ngs-ac:not(.ngs-two) .ngs-col + .ngs-col{border-top:1px solid #eceef0;}',
@@ -191,7 +191,7 @@
       '#ngs-ac .ngs-all{min-height:46px;color:' + B + ';font-weight:500;justify-content:space-between;padding-right:16px;}',
       '#ngs-ac .ngs-go{width:18px;height:18px;flex:0 0 18px;display:flex;}',
       '#ngs-ac .ngs-empty{padding:14px 16px;color:#525252;}',
-      '#ngs-ac .ngs-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}',
+      '.ngs-sr{position:absolute !important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0;}',
       '@media (max-width:767px){',
       '  #ngs-ac{position:fixed;left:0 !important;right:0;width:auto !important;border-radius:0;border-left:0;border-right:0;border-bottom:0;box-shadow:none;}',
       '  #ngs-ac .ngs-opt{min-height:48px;}',
@@ -252,9 +252,18 @@
     function placeClear() {
       var ir = input.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
       clearBtn.style.left = Math.round(ir.right - wr.left - 38) + 'px';
+      clearBtn.style.top = Math.round(ir.top - wr.top + ir.height / 2) + 'px';
+      // corrigeer voor padding/rand van de wrapper: midden van de knop = midden van het veld
+      var cr = clearBtn.getBoundingClientRect();
+      if (cr.height) {
+        var dy = (ir.top + ir.height / 2) - (cr.top + cr.height / 2);
+        var dx = (ir.right - 38) - cr.left;
+        clearBtn.style.top = Math.round(parseFloat(clearBtn.style.top) + dy) + 'px';
+        clearBtn.style.left = Math.round(parseFloat(clearBtn.style.left) + dx) + 'px';
+      }
       input.style.paddingRight = '40px';
     }
-    function syncClear() { clearBtn.classList.toggle('ngs-show', !!input.value); }
+    function syncClear() { var was = clearBtn.classList.contains('ngs-show'); clearBtn.classList.toggle('ngs-show', !!input.value); if (!was && input.value) placeClear(); }
     clearBtn.addEventListener('mousedown', function (e) { e.preventDefault(); });
     clearBtn.addEventListener('click', function () {
       input.value = ''; typed = ''; syncClear(); input.focus(); fetchSuggest('');
