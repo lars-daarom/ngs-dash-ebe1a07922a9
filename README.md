@@ -6,24 +6,19 @@ geleerd heeft en hoe de VWO-variant presteert tegenover de controle.
 
 ## Toegang
 
-De data staat achter een dashboard-token. Maak er een aan in de Supabase SQL editor:
+Geen login: open de URL en het dashboard laadt direct. De dashboard-functies in Supabase zijn
+openbaar leesbaar (alleen geaggregeerde, gemaskeerde cijfers). Weer afschermen kan met:
 
 ```sql
-select private.dashboard_new_token('naam van de gebruiker');
+create or replace function search.dash_ok(p_token text) returns boolean language sql stable security definer
+set search_path to 'search','extensions','public' as $$
+  select exists (select 1 from private.dashboard_tokens where hash = encode(extensions.digest(coalesce(p_token, ''), 'sha256'), 'hex'));
+$$;
 ```
-
-Het token wordt maar één keer getoond (in de database staat alleen een hash). Intrekken:
-
-```sql
-delete from private.dashboard_tokens where label = 'naam van de gebruiker';
-```
-
-Je kunt het token ook meegeven in de link: `…/nedgame-zoek-dashboard/#t=TOKEN`. Het dashboard
-bewaart het dan lokaal en haalt het meteen uit de adresbalk.
 
 ## Hoe het werkt
 
-- `search_dashboard(p_token)` — alle geaggregeerde cijfers, elke 30 seconden ververst
-- `search_dashboard_feed(p_token, p_since)` — laatste gebeurtenissen voor de live-animatie, elke 5 seconden
+- `search_dashboard()` — alle geaggregeerde cijfers, elke 30 seconden ververst
+- `search_dashboard_feed(p_since)` — laatste gebeurtenissen voor de live-animatie, elke 5 seconden
 - Geen bezoekers-id's; zoekteksten met e-mailadressen, lange cijferreeksen of links worden gemaskeerd
 - Statische site zonder build-stap: `index.html`, `style.css`, `app.js`

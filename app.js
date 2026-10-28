@@ -149,7 +149,6 @@
   });
   $('#logout').addEventListener('click', function () {
     try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
-    token = null; stopPolling(); showGate(false);
   });
 
   /* ---------------- toestand ---------------- */
@@ -172,11 +171,11 @@
 
   function refreshDash(first) {
     rpc('search_dashboard', { p_token: token }).then(function (d) { state.failures = 0; onDash(d, first); })
-      .catch(function (e) { if (e.auth) { showGate(true); stopPolling(); } else { state.failures++; setLive(); } });
+      .catch(function (e) { state.failures++; setLive(); });
   }
   function refreshFeed(first) {
     rpc('search_dashboard_feed', { p_token: token, p_since: state.feedSince }).then(function (f) { onFeed(f, first); })
-      .catch(function (e) { if (e.auth) { showGate(true); stopPolling(); } });
+      .catch(function (e) { state.failures++; });
   }
 
   function onDash(d, first) {
@@ -1207,10 +1206,9 @@
   });
 
   /* ---------------- start ---------------- */
-  token = readToken();
-  if (!token) { showGate(false); return; }
-  rpc('search_dashboard', { p_token: token }).then(function (d) { start(d); })
-    .catch(function (e) { if (e.auth) showGate(true); else { start(null); } });
+  // Geen token meer nodig: de dashboard-functies in Supabase zijn openbaar leesbaar.
+  token = 'public';
+  start(null);
 
   // alleen voor lokale tests (fixture), nooit in productie gebruikt
   window.__ngsDash = { onDash: onDash, onFeed: onFeed, start: start, state: state };
